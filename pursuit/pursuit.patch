@@ -1,0 +1,55 @@
+diff --git a/pursuit.cabal b/pursuit.cabal
+index ab54572..052958b 100644
+--- a/pursuit.cabal
++++ b/pursuit.cabal
+@@ -128,6 +128,8 @@ library
+                  , xss-sanitize
+                  , wai-middleware-gunzip
+                  , barrier ==0.1.*
++                 , mono-traversable
++                 , minlen
+ 
+     if flag(dev)
+       build-depends: foreign-store
+diff --git a/src/Handler/Database.hs b/src/Handler/Database.hs
+index 903a554..61682a3 100644
+--- a/src/Handler/Database.hs
++++ b/src/Handler/Database.hs
+@@ -29,6 +29,9 @@ import Language.PureScript.Docs.RenderedCode.Types (RenderedCodeElement(..), out
+ 
+ import Handler.Utils
+ import Handler.Caching (clearCache)
++import Data.MinLen as M
++
++type One = Succ Zero
+ 
+ getAllPackageNames :: Handler [PackageName]
+ getAllPackageNames = do
+@@ -161,7 +164,7 @@ getLatestVersionFor :: PackageName -> Handler (Maybe Version)
+ getLatestVersionFor pkgName = do
+   vs  <- availableVersionsFor pkgName
+   let vs' = toMinLen vs :: Maybe (MinLen One [Version])
+-  return $ map maximum vs'
++  return $ map M.maximum vs'
+ 
+ -- | Insert a package at a specific version into the database.
+ insertPackage :: D.VerifiedPackage -> Handler ()
+diff --git a/src/Import/NoFoundation.hs b/src/Import/NoFoundation.hs
+index a4ac30f..538500c 100644
+--- a/src/Import/NoFoundation.hs
++++ b/src/Import/NoFoundation.hs
+@@ -1,12 +1,9 @@
+ module Import.NoFoundation
+-    ( module Import.NoFoundation
+-    , module Import
++    ( module Import
+     ) where
+ 
+-import ClassyPrelude.Yesod   as Import
++import ClassyPrelude.Yesod   as Import hiding (Handler)
+ import Settings              as Import
+ import Yesod.Core.Types      as Import (loggerSet)
+ import Yesod.Default.Config2 as Import
+ import Control.Category      as Import ((>>>), (<<<))
+-
+-type One = Succ Zero
